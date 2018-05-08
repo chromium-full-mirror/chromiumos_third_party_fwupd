@@ -114,6 +114,7 @@ fu_engine_partial_hash_func (void)
 static void
 fu_engine_require_hwid_func (void)
 {
+	AsApp *app;
 	gboolean ret;
 	g_autofree gchar *filename = NULL;
 	g_autoptr(AsStore) store = NULL;
@@ -154,9 +155,12 @@ fu_engine_require_hwid_func (void)
 	fu_device_add_flag (device, FWUPD_DEVICE_FLAG_UPDATABLE);
 	fu_engine_add_device (engine, device);
 
-	/* install it */
-	ret = fu_engine_install (engine, fu_device_get_id (device),
-				 store, blob_cab, FWUPD_INSTALL_FLAG_NONE, &error);
+	/* get app */
+	app = as_store_get_app_by_id (store, "com.hughski.test.firmware");
+	g_assert_nonnull (app);
+
+	/* check requirements */
+	ret = fu_engine_check_requirements (engine, app, device, &error);
 	g_assert_error (error, FWUPD_ERROR, FWUPD_ERROR_INVALID_FILE);
 	g_assert (error != NULL);
 	g_assert_cmpstr (error->message, ==,
@@ -315,6 +319,7 @@ fu_engine_downgrade_func (void)
 static void
 fu_engine_history_func (void)
 {
+	AsApp *app;
 	gboolean ret;
 	g_autofree gchar *device_str_expected = NULL;
 	g_autofree gchar *device_str = NULL;
@@ -371,9 +376,13 @@ fu_engine_history_func (void)
 	g_assert_no_error (error);
 	g_assert (store != NULL);
 
+	/* get app */
+	app = as_store_get_app_by_id (store, "com.hughski.test.firmware");
+	g_assert_nonnull (app);
+
 	/* install it */
-	ret = fu_engine_install (engine, fu_device_get_id (device),
-				 store, blob_cab, FWUPD_INSTALL_FLAG_NONE, &error);
+	ret = fu_engine_install (engine, device, app, blob_cab,
+				 FWUPD_INSTALL_FLAG_NONE, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 
@@ -430,6 +439,7 @@ fu_engine_history_func (void)
 static void
 fu_engine_history_error_func (void)
 {
+	AsApp *app;
 	gboolean ret;
 	g_autofree gchar *device_str_expected = NULL;
 	g_autofree gchar *device_str = NULL;
@@ -486,8 +496,10 @@ fu_engine_history_error_func (void)
 	store = fu_engine_get_store_from_blob (engine, blob_cab, &error);
 	g_assert_no_error (error);
 	g_assert (store != NULL);
-	ret = fu_engine_install (engine, fu_device_get_id (device),
-				 store, blob_cab, FWUPD_INSTALL_FLAG_NONE, &error);
+	app = as_store_get_app_by_id (store, "com.hughski.test.firmware");
+	g_assert_nonnull (app);
+	ret = fu_engine_install (engine, device, app, blob_cab,
+				 FWUPD_INSTALL_FLAG_NONE, &error);
 	g_assert_error (error, FWUPD_ERROR, FWUPD_ERROR_NOT_SUPPORTED);
 	g_assert (error != NULL);
 	g_assert_cmpstr (error->message, ==,
