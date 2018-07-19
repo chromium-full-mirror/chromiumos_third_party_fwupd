@@ -1,0 +1,8 @@
+DESCRIPTION="A simple daemon to allow session software to update firmware"
+HOMEPAGE="https://github.com/hughsie/fwupd"
+UPSTREAM_REPO="https://github.com/hughsie/fwupd.git"
+LOCAL_GIT_REPO="https://chromium.googlesource.com/chromiumos/third_party/fwupd"
+UPSTREAM_BUGSDB="https://github.com/hughsie/fwupd/issues"
+LOCAL_BUGSDB="https://crbug.com"
+LICENSE="LGPLv2.1"
+LICENSE_FILE="COPYING"
