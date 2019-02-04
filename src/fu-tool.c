@@ -1193,6 +1193,7 @@ main (int argc, char *argv[])
 	gboolean force = FALSE;
 	gboolean ret;
 	gboolean version = FALSE;
+	gboolean interactive = isatty (fileno (stdout)) != 0;
 	g_auto(GStrv) plugin_glob = NULL;
 	g_autoptr(FuUtilPrivate) priv = g_new0 (FuUtilPrivate, 1);
 	g_autoptr(GError) error = NULL;
@@ -1229,7 +1230,7 @@ main (int argc, char *argv[])
 	textdomain (GETTEXT_PACKAGE);
 
 	/* ensure root user */
-	if (getuid () != 0 || geteuid () != 0)
+	if (interactive && (getuid () != 0 || geteuid () != 0))
 		/* TRANSLATORS: we're poking around as a power user */
 		g_printerr ("%s\n", _("This program may only work correctly as root"));
 
@@ -1343,7 +1344,7 @@ main (int argc, char *argv[])
 			  (GCompareFunc) fu_sort_command_name_cb);
 
 	/* non-TTY consoles cannot answer questions */
-	if (isatty (fileno (stdout)) == 0) {
+	if (!interactive) {
 		priv->no_reboot_check = TRUE;
 		fu_progressbar_set_interactive (priv->progressbar, FALSE);
 	}
