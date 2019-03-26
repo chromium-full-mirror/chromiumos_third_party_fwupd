@@ -755,6 +755,7 @@ fu_util_install_blob (FuUtilPrivate *priv, gchar **values, GError **error)
 			return FALSE;
 		}
 	}
+	priv->flags = FWUPD_INSTALL_FLAG_NO_HISTORY;
 	if (!fu_engine_install_blob (priv->engine, device, blob_fw, priv->flags, error))
 		return FALSE;
 	if (priv->cleanup_blob) {
@@ -1546,7 +1547,6 @@ main (int argc, char *argv[])
 	}
 
 	/* set flags */
-	priv->flags |= FWUPD_INSTALL_FLAG_NO_HISTORY;
 	if (allow_reinstall)
 		priv->flags |= FWUPD_INSTALL_FLAG_ALLOW_REINSTALL;
 	if (allow_older)
