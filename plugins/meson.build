@@ -1,4 +1,5 @@
 subdir('ccgx')
+subdir('cros-ec')
 subdir('cpu')
 subdir('dfu')
 subdir('colorhug')
