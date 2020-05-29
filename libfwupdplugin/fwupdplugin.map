@@ -578,5 +578,7 @@ LIBFWUPDPLUGIN_1.4.1 {
     fu_device_get_proxy_guid;
     fu_device_set_proxy;
     fu_device_set_proxy_guid;
+    fu_fmap_firmware_get_type;
+    fu_fmap_firmware_new;
   local: *;
 } LIBFWUPDPLUGIN_1.4.0;
