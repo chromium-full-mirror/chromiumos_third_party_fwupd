@@ -36,6 +36,7 @@ typedef struct {
 	gchar				version[FMAP_STRLEN];
 	gint32				rollback;
 	guint32				key_version;
+	guint64				image_idx;
 } FuCrosEcFirmwareSection;
 
 gboolean			 fu_cros_ec_firmware_pick_sections	(FuCrosEcFirmware *self,
