@@ -533,7 +533,7 @@
         <doc:doc>
           <doc:summary>
             <doc:para>
-              The key, e.g. 'BlacklistPlugins'.
+              The key, e.g. 'DisabledPlugins'.
             </doc:para>
           </doc:summary>
         </doc:doc>
