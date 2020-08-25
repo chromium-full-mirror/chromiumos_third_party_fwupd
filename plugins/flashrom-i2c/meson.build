@@ -9,6 +9,9 @@ shared_module('fu_plugin_flashrom_i2c',
   sources : [
     'fu-plugin-flashrom-i2c.c',
     'fu-i2c-device.c',
+    'i2c_helper_linux.c',
+    'fu-i2c-device-reader.c',
+    'fu-i2c-device-reader-lspcon.c'
   ],
   include_directories : [
     root_incdir,
