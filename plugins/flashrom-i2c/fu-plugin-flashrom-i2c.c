@@ -34,18 +34,18 @@ static gboolean fu_plugin_flashrom_i2c_match_regex (const char *target, GError *
 
 static gint fu_plugin_flashrom_i2c_get_bus_number_from_path (gchar *device_path, GError **error)
 {
-	gint bus_no = -1;
+	gint bus_number = -1;
 	g_autofree gchar *device_symlink = NULL;
 	g_auto(GStrv) names = NULL;
 
 	device_symlink = g_file_read_link (device_path, error);
 	if (device_symlink == NULL)
-		return bus_no;
+		return bus_number;
 
 	names = g_strsplit (device_symlink, "/", -1);
 	for (guint i = 0; names[i] != NULL; i++) {
 		if (fu_plugin_flashrom_i2c_match_regex (names[i], error)) {
-			bus_no = g_ascii_strtoll (
+			bus_number = g_ascii_strtoll (
 				&names[i][strlen (DEVICE_NAME_PREFIX)],
 				NULL,
 				10);
@@ -53,7 +53,7 @@ static gint fu_plugin_flashrom_i2c_get_bus_number_from_path (gchar *device_path,
 		}
 	}
 
-	return bus_no;
+	return bus_number;
 }
 
 static gchar *fu_plugin_flashrom_i2c_get_device_guid (const gchar *pid, const gchar *vid)
@@ -66,7 +66,7 @@ static gchar *fu_plugin_flashrom_i2c_get_device_guid (const gchar *pid, const gc
 static gboolean fu_plugin_flashrom_i2c_add_device (FuPlugin *plugin, const gchar *i2c_device_dir,
 				const gchar *i2c_name, GError **error)
 {
-	gint bus_no;
+	gint bus_number;
 	const gchar *quirk_programmer_name;
 	const gchar *quirk_device_name;
 	const gchar *quirk_device_protocol;
@@ -92,15 +92,16 @@ static gboolean fu_plugin_flashrom_i2c_add_device (FuPlugin *plugin, const gchar
 	quirk_device_protocol = fu_plugin_lookup_quirk_by_id (
 		plugin, quirk_key, DEVICE_PROTOCOL);
 	quirk_vendor_name = fu_plugin_lookup_quirk_by_id (
-                plugin, quirk_key, DEVICE_VENDOR_NAME);
+		plugin, quirk_key, DEVICE_VENDOR_NAME);
+
 	/* Add devices with quirk configuration only. */
 	if (quirk_programmer_name == NULL)
 		return TRUE;
 
 	device_path = g_build_filename (
 		i2c_device_dir, i2c_name, NULL);
-	bus_no = fu_plugin_flashrom_i2c_get_bus_number_from_path (device_path, error);
-	if (bus_no == -1) {
+	bus_number = fu_plugin_flashrom_i2c_get_bus_number_from_path (device_path, error);
+	if (bus_number == -1) {
 		g_set_error (error,
 			     FWUPD_ERROR,
 			     FWUPD_ERROR_INTERNAL,
@@ -130,16 +131,27 @@ static gboolean fu_plugin_flashrom_i2c_add_device (FuPlugin *plugin, const gchar
 	fu_device_add_guid (FU_DEVICE (dev), device_guid);
 	fu_device_set_vendor (FU_DEVICE (dev), quirk_vendor_name);
 	fu_device_add_vendor_id (FU_DEVICE (dev), vendor_id);
-	fu_device_set_version_format (FU_DEVICE (dev),
-				      FWUPD_VERSION_FORMAT_PAIR);
-	/* TODO(b/154178623): Get the real version number using flashrom. */
-	fu_device_set_version (FU_DEVICE (dev), "0.0");
+
 	fu_device_set_name (FU_DEVICE (dev), quirk_device_name);
 	fu_device_set_protocol (FU_DEVICE (dev), quirk_device_protocol);
 	fu_device_set_physical_id (FU_DEVICE (dev), physical_id);
-	fu_device_set_metadata_integer (FU_DEVICE (dev), PORT_NAME, bus_no);
-	fu_device_set_metadata (FU_DEVICE (dev), PROGRAMMER_NAME,
+	if (g_strcmp0 (quirk_device_name, "PS175") == 0)
+		fu_i2c_device_set_kind (dev, I2C_DEVICE_PS175);
+	else {
+		g_set_error (error,
+			     FWUPD_ERROR,
+			     FWUPD_ERROR_INTERNAL,
+			     "Unsupported device name: %s",
+			     quirk_device_name);
+		return FALSE;
+	}
+
+	fu_i2c_device_set_programmer_name (dev,
 		quirk_programmer_name);
+	fu_i2c_device_set_bus_number (dev, bus_number);
+	if (!fu_device_setup (FU_DEVICE (dev), error))
+		return FALSE;
+
 	fu_plugin_device_add (plugin, FU_DEVICE (dev));
 	return TRUE;
 }
