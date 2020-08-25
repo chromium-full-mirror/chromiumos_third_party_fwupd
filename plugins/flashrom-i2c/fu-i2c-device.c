@@ -24,35 +24,66 @@ struct FlashromArgs
 	const gchar *operation;
 };
 
-struct _FuI2cDevice
+typedef struct {
+	FuDevice		parent_instance;
+	FuI2cDeviceKind		kind;
+	gint			bus_number;
+	gint			update_block_number;
+	gchar*			programmer_name;
+} FuI2cDevicePrivate;
+
+G_DEFINE_TYPE_WITH_PRIVATE (FuI2cDevice, fu_i2c_device, FU_TYPE_DEVICE)
+
+#define GET_PRIVATE(o) (fu_i2c_device_get_instance_private (o))
+
+void fu_i2c_device_set_kind (FuI2cDevice *self, FuI2cDeviceKind device_kind)
 {
-	FuDevice parent_instance;
-};
+	FuI2cDevicePrivate *priv = GET_PRIVATE (self);
+	priv->kind = device_kind;
+}
 
-G_DEFINE_TYPE (FuI2cDevice, fu_i2c_device, FU_TYPE_DEVICE)
-
-/* This calls fu_common_get_contents_fd which will close the fd when done. */
-static gint fu_i2c_device_get_boot_block_from_fd (int fd, GError **error)
+FuI2cDeviceKind fu_i2c_device_get_kind (FuI2cDevice *self)
 {
-	g_autoptr (GBytes) result = NULL;
-	gsize result_len = 0;
-	result = fu_common_get_contents_fd (fd, 1, error);
-	if (result == NULL)
-		return -1;
+	FuI2cDevicePrivate *priv = GET_PRIVATE (self);
+	return priv->kind;
+}
 
-	const guint8 *result_bytes = g_bytes_get_data (result, &result_len);
-	if (result_len != 1) {
-		g_set_error (error,
-			     FWUPD_ERROR,
-			     FWUPD_ERROR_INTERNAL,
-			     "%s: bootblock info size is expected to be 1 byte, \
-			     got %d",
-			     __func__,
-			     result_len);
-		return -1;
-	}
+void fu_i2c_device_set_bus_number (FuI2cDevice *self, gint bus_number)
+{
+	FuI2cDevicePrivate *priv = GET_PRIVATE (self);
+	priv->bus_number = bus_number;
+}
 
-	return result_bytes[0];
+gint fu_i2c_device_get_bus_number (FuI2cDevice *self)
+{
+	FuI2cDevicePrivate *priv = GET_PRIVATE (self);
+	return priv->bus_number;
+}
+
+void fu_i2c_device_set_update_block_number (FuI2cDevice *self, gint block_number)
+{
+	FuI2cDevicePrivate *priv = GET_PRIVATE (self);
+	priv->update_block_number = block_number;
+}
+
+gint fu_i2c_device_get_update_block_number (FuI2cDevice *self)
+{
+	FuI2cDevicePrivate *priv = GET_PRIVATE (self);
+	return priv->update_block_number;
+}
+
+void fu_i2c_device_set_programmer_name (FuI2cDevice *self, gchar *name)
+{
+	FuI2cDevicePrivate *priv = GET_PRIVATE (self);
+
+	g_free (priv->programmer_name);
+	priv->programmer_name = g_strdup (name);
+}
+
+gchar *fu_i2c_device_get_programmer_name (FuI2cDevice *self)
+{
+	FuI2cDevicePrivate *priv = GET_PRIVATE (self);
+	return priv->programmer_name;
 }
 
 static gboolean fu_i2c_device_validate_flashrom_args (
@@ -87,66 +118,7 @@ static gboolean fu_i2c_device_run_command (const struct FlashromArgs *args,
 				 "--image", args->image,
 				 args->operation,
 				 NULL };
-
 	return fu_common_spawn_sync (argv, NULL, NULL, 0, NULL, error);
-}
-
-/* Update should happen on the non-activated block. If neither block is
- * activated, force update to block 1.
- */
-static gint fu_i2c_device_get_target_block_no (
-	const gchar *dir_name,
-	const gchar *spi_master,
-	const gchar *layout,
-	const gchar *flag_name,
-	GError **error)
-{
-	struct FlashromArgs flash_args;
-	g_autofree gchar *img_arg = NULL;
-	g_autofree gchar *tmp_file_name = NULL;
-	tmp_file_name = g_build_filename (dir_name, "XXXXXX", NULL);
-	gint fd = g_mkstemp (tmp_file_name);
-	gint current_block = -1;
-
-	if (fd == -1) {
-		g_set_error (error,
-			     FWUPD_ERROR,
-			     FWUPD_ERROR_INTERNAL,
-			     "%s failed to create tmp file %s",
-			     __func__,
-			     tmp_file_name);
-		return -1;
-	}
-
-	img_arg = g_strdup_printf ("%s:%s", flag_name, tmp_file_name);
-	flash_args.spi_master = spi_master;
-	flash_args.layout = layout;
-	flash_args.image = img_arg;
-	flash_args.operation = "-r";
-
-	if (fu_i2c_device_run_command (&flash_args, error) == TRUE) {
-		current_block = fu_i2c_device_get_boot_block_from_fd (
-			fd, error);
-	} else {
-		g_autoptr(GError) error_local = NULL;
-		if (g_close (fd, &error_local) == FALSE) {
-			g_warning ("%s failed to close fd on %s: %s",
-				   __func__,
-				   tmp_file_name,
-				   error_local->message);
-		}
-
-		fd = -1;
-	}
-
-	g_unlink (tmp_file_name);
-
-	if (current_block == -1)
-		return -1;
-	else if (current_block == 1)
-		return 2;
-	else
-		return 1;
 }
 
 static gboolean fu_i2c_file_readable (const gchar *path, GError **error)
@@ -174,7 +146,7 @@ static gboolean fu_i2c_match_firmware (const gchar *target, GError **error)
 		return FALSE;
 
 	result = g_regex_match_all_full (regex, target, -1, 0, 0, NULL, error);
-	g_regex_unref(regex);
+	g_regex_unref (regex);
 	return result;
 }
 
@@ -195,7 +167,7 @@ static gchar *fu_i2c_file_find_fw_path (const gchar *search_dir, GError **error)
 	}
 
 	while ((ent_name = g_dir_read_name (dir)) != NULL) {
-		if (fu_i2c_match_firmware(ent_name, error)) {
+		if (fu_i2c_match_firmware (ent_name, error)) {
 			if (fw_path != NULL) {
 				break;
 			}
@@ -221,12 +193,11 @@ static gboolean fu_i2c_device_write_firmware (FuDevice *device,
 					      FwupdInstallFlags flags,
 					      GError **error)
 {
-	gint block_no;
-	gint bus_no = fu_device_get_metadata_integer (device, PORT_NAME);
+	gint block_number;
+	gint bus_number = fu_i2c_device_get_bus_number (device);
 	struct FlashromArgs flash_args_write_fw;
 	struct FlashromArgs flash_args_write_flg;
-	const gchar *programmer_name = fu_device_get_metadata (device,
-		PROGRAMMER_NAME);
+	const gchar *programmer_name = fu_i2c_device_get_programmer_name (device);
 	g_autoptr (GBytes) archive_bytes = NULL;
 	g_autofree gchar *tmp_dir_name = NULL;
 	g_autofree gchar *flash_spi_master_arg = NULL;
@@ -240,7 +211,7 @@ static gboolean fu_i2c_device_write_firmware (FuDevice *device,
 	g_autofree gchar *flag_file_name = NULL;
 	gboolean ret = TRUE;
 	archive_bytes = fu_firmware_get_image_default_bytes (firmware, error);
-	tmp_dir_name = g_strdup_printf ("/tmp/flashrom-i2c-%d-XXXXXX", bus_no);
+	tmp_dir_name = g_strdup_printf ("/tmp/flashrom-i2c-%d-XXXXXX", bus_number);
 	if (g_mkdtemp (tmp_dir_name) == NULL) {
 		g_set_error (error,
 			     FWUPD_ERROR,
@@ -271,7 +242,7 @@ static gboolean fu_i2c_device_write_firmware (FuDevice *device,
 		IMG_FLAG2_NAME,
 		NULL);
 
-	firmware_file_path = fu_i2c_file_find_fw_path(tmp_dir_name, error);
+	firmware_file_path = fu_i2c_file_find_fw_path (tmp_dir_name, error);
 	if (firmware_file_path == NULL) {
 		ret = FALSE;
 		goto cleanup;
@@ -286,18 +257,11 @@ static gboolean fu_i2c_device_write_firmware (FuDevice *device,
 	}
 
 	flash_spi_master_arg = g_strdup_printf ("%s:bus=%d",
-		programmer_name, bus_no);
-	block_no = fu_i2c_device_get_target_block_no (
-		tmp_dir_name, flash_spi_master_arg, layout_file_path,
-		LAYOUT_FLAG_NAME, error);
-	if (block_no == -1) {
-		ret = FALSE;
-		goto cleanup;
-	}
-
+		programmer_name, bus_number);
+	block_number = fu_i2c_device_get_update_block_number (device);
 	partition_name = g_strdup_printf (
-		"%s%d", LAYOUT_PARTITION_NAME, block_no);
-	if (block_no == 1)
+		"%s%d", LAYOUT_PARTITION_NAME, block_number);
+	if (block_number == 1)
 		flag_file_name = g_strdup (flag1_file_path);
 	else
 		flag_file_name = g_strdup (flag2_file_path);
@@ -327,16 +291,64 @@ cleanup:
 	return ret;
 }
 
+static gboolean fu_i2c_device_setup (FuI2cDevice *self, GError **error)
+{
+	g_autoptr (FuI2cDeviceReader) reader = NULL;
+	struct FwVersionInfo info;
+	FuI2cDeviceKind kind;
+	gint bus_number;
+	gint block_number;
+	gint block_to_update;
+
+	kind = fu_i2c_device_get_kind (self);
+	if (kind == I2C_DEVICE_PS175)
+		reader = g_object_new (FU_TYPE_I2C_DEVICE_READER_LSPCON, NULL);
+	else {
+		g_set_error (error,
+			     FWUPD_ERROR,
+			     FWUPD_ERROR_INTERNAL,
+			     "unsupported device kind %d",
+			     kind);
+	}
+
+	bus_number = fu_i2c_device_get_bus_number (self);
+	block_number = fu_i2c_device_reader_get_boot_block (reader, bus_number, error);
+	if (block_number == -1)
+		return FALSE;
+
+	block_to_update = fu_i2c_device_reader_get_target_block (reader,
+		block_number, error);
+	if (block_to_update == -1)
+		return FALSE;
+
+	fu_i2c_device_set_update_block_number (FU_DEVICE (self), block_to_update);
+	fu_i2c_device_reader_get_version (reader, bus_number, block_number, &info, error);
+	fu_device_set_version_format (FU_DEVICE (self),
+				      info.fmt);
+	fu_device_set_version (FU_DEVICE (self), info.version);
+	return TRUE;
+}
+
+static void fu_i2c_device_finalize (GObject *object)
+{
+	FuI2cDevice *self = FU_I2C_DEVICE (object);
+	FuI2cDevicePrivate *priv = GET_PRIVATE (self);
+	g_free (priv->programmer_name);
+}
+
 static void fu_i2c_device_init (FuI2cDevice *self)
 {
 	fu_device_add_flag (FU_DEVICE (self), FWUPD_DEVICE_FLAG_UPDATABLE);
 	fu_device_add_flag (FU_DEVICE (self), FWUPD_DEVICE_FLAG_INTERNAL);
-	fu_device_add_flag (FU_DEVICE (self), FWUPD_DEVICE_FLAG_USABLE_DURING_UPDATE);
+	fu_device_add_flag (FU_DEVICE (self),
+		FWUPD_DEVICE_FLAG_USABLE_DURING_UPDATE);
 }
 
 static void fu_i2c_device_class_init (FuI2cDeviceClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	FuDeviceClass *klass_device = FU_DEVICE_CLASS (klass);
+	object_class->finalize = fu_i2c_device_finalize;
 	klass_device->write_firmware = fu_i2c_device_write_firmware;
+	klass_device->setup = fu_i2c_device_setup;
 }
