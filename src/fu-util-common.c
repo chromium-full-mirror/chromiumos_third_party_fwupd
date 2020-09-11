@@ -15,6 +15,7 @@
 #include <json-glib/json-glib.h>
 
 #include "fu-common.h"
+#include "fu-device-private.h"
 #include "fu-util-common.h"
 #include "fu-device.h"
 
@@ -1586,4 +1587,42 @@ fu_util_send_report (FwupdClient *client,
 
 	/* success */
 	return TRUE;
+}
+
+gint
+fu_util_sort_devices_by_flags_cb (gconstpointer a, gconstpointer b)
+{
+	FuDevice *dev_a = *((FuDevice **) a);
+	FuDevice *dev_b = *((FuDevice **) b);
+
+	if ((!fu_device_has_flag (dev_a, FWUPD_DEVICE_FLAG_UPDATABLE) &&
+	     fu_device_has_flag (dev_b, FWUPD_DEVICE_FLAG_UPDATABLE)) ||
+	    (!fu_device_has_flag (dev_a, FWUPD_DEVICE_FLAG_SUPPORTED) &&
+	     fu_device_has_flag (dev_b, FWUPD_DEVICE_FLAG_SUPPORTED)))
+		return -1;
+	if ((fu_device_has_flag (dev_a, FWUPD_DEVICE_FLAG_UPDATABLE) &&
+	    !fu_device_has_flag (dev_b, FWUPD_DEVICE_FLAG_UPDATABLE)) ||
+	    (fu_device_has_flag (dev_a, FWUPD_DEVICE_FLAG_SUPPORTED) &&
+	    !fu_device_has_flag (dev_b, FWUPD_DEVICE_FLAG_SUPPORTED)))
+		return 1;
+
+	return 0;
+}
+
+static gint
+fu_util_device_order_compare (FuDevice *device1, FuDevice *device2)
+{
+	if (fu_device_get_order (device1) < fu_device_get_order (device2))
+		return -1;
+	if (fu_device_get_order (device1) > fu_device_get_order (device2))
+		return 1;
+	return 0;
+}
+
+gint
+fu_util_device_order_sort_cb (gconstpointer a, gconstpointer b)
+{
+	FuDevice *device_a = *((FuDevice **) a);
+	FuDevice *device_b = *((FuDevice **) b);
+	return fu_util_device_order_compare (device_a, device_b);
 }

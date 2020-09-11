@@ -82,3 +82,7 @@ gboolean	 fu_util_send_report		(FwupdClient	*client,
 						 const gchar	*sig,
 						 gchar		**uri,
 						 GError		**error);
+gint		 fu_util_sort_devices_by_flags_cb	(gconstpointer	 a,
+						 gconstpointer	 b);
+gint		 fu_util_device_order_sort_cb	(gconstpointer a,
+						 gconstpointer b);
