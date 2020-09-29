@@ -2173,19 +2173,17 @@ fu_engine_get_plugins (FuEngine *self)
 }
 
 /**
- * fu_engine_get_device_by_id:
+ * fu_engine_get_device:
  * @self: A #FuEngine
- * @device_id: A string
- * @error: A #GError or NULL
+ * @device_id: A device ID
+ * @error: A #GError, or %NULL
  *
- * Returns the device from the engine or NULL if not found
+ * Gets a specific device.
  *
- * Returns: (transfer full): a #FuDevice
- *
- * Since: 1.5.0
+ * Returns: (transfer full): a device, or %NULL if not found
  **/
 FuDevice *
-fu_engine_get_device_by_id (FuEngine *self, const gchar *device_id, GError **error)
+fu_engine_get_device (FuEngine *self, const gchar *device_id, GError **error)
 {
 	g_autoptr(FuDevice) device1 = NULL;
 	g_autoptr(FuDevice) device2 = NULL;
@@ -2272,7 +2270,7 @@ fu_engine_update_prepare (FuEngine *self,
 	g_autoptr(FuDevice) device = NULL;
 
 	/* the device and plugin both may have changed */
-	device = fu_engine_get_device_by_id (self, device_id, error);
+	device = fu_engine_get_device (self, device_id, error);
 	if (device == NULL)
 		return FALSE;
 
@@ -2310,7 +2308,7 @@ fu_engine_update_cleanup (FuEngine *self,
 	g_autoptr(FuDevice) device = NULL;
 
 	/* the device and plugin both may have changed */
-	device = fu_engine_get_device_by_id (self, device_id, error);
+	device = fu_engine_get_device (self, device_id, error);
 	if (device == NULL)
 		return FALSE;
 	str = fu_device_to_string (device);
@@ -2341,7 +2339,7 @@ fu_engine_update_detach (FuEngine *self, const gchar *device_id, GError **error)
 	g_autoptr(FuDevice) device = NULL;
 
 	/* the device and plugin both may have changed */
-	device = fu_engine_get_device_by_id (self, device_id, error);
+	device = fu_engine_get_device (self, device_id, error);
 	if (device == NULL)
 		return FALSE;
 	str = fu_device_to_string (device);
@@ -2364,7 +2362,7 @@ fu_engine_update_attach (FuEngine *self, const gchar *device_id, GError **error)
 	g_autoptr(FuDevice) device = NULL;
 
 	/* the device and plugin both may have changed */
-	device = fu_engine_get_device_by_id (self, device_id, error);
+	device = fu_engine_get_device (self, device_id, error);
 	if (device == NULL) {
 		g_prefix_error (error, "failed to get device after update: ");
 		return FALSE;
@@ -2423,7 +2421,7 @@ fu_engine_update_reload (FuEngine *self, const gchar *device_id, GError **error)
 	g_autoptr(FuDevice) device = NULL;
 
 	/* the device and plugin both may have changed */
-	device = fu_engine_get_device_by_id (self, device_id, error);
+	device = fu_engine_get_device (self, device_id, error);
 	if (device == NULL) {
 		g_prefix_error (error, "failed to get device after update: ");
 		return FALSE;
@@ -2465,7 +2463,7 @@ fu_engine_update (FuEngine *self,
 		return FALSE;
 
 	/* the device and plugin both may have changed */
-	device = fu_engine_get_device_by_id (self, device_id, error);
+	device = fu_engine_get_device (self, device_id, error);
 	if (device == NULL) {
 		g_prefix_error (error, "failed to get device after detach: ");
 		return FALSE;
@@ -2612,7 +2610,7 @@ fu_engine_install_blob (FuEngine *self,
 			return FALSE;
 
 		/* the device and plugin both may have changed */
-		device_tmp = fu_engine_get_device_by_id (self, device_id, error);
+		device_tmp = fu_engine_get_device (self, device_id, error);
 		if (device_tmp == NULL)
 			return FALSE;
 		if (!fu_device_has_flag (device_tmp, FWUPD_DEVICE_FLAG_ANOTHER_WRITE_REQUIRED))
@@ -3727,27 +3725,6 @@ fu_engine_get_devices (FuEngine *self, GError **error)
 	}
 	g_ptr_array_sort (devices, fu_engine_sort_devices_by_priority_name);
 	return g_steal_pointer (&devices);
-}
-
-/**
- * fu_engine_get_device:
- * @self: A #FuEngine
- * @device_id: A device ID
- * @error: A #GError, or %NULL
- *
- * Gets a specific device.
- *
- * Returns: (transfer full): a device, or %NULL if not found
- **/
-FuDevice *
-fu_engine_get_device (FuEngine *self, const gchar *device_id, GError **error)
-{
-	FuDevice *device;
-
-	device = fu_device_list_get_by_id (self->device_list, device_id, error);
-	if (device == NULL)
-		return NULL;
-	return device;
 }
 
 /**
