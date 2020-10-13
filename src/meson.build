@@ -5,9 +5,13 @@ if build_daemon
 endif
 
 systemd_src = []
+daemon_dep = []
 
 if get_option('systemd')
   systemd_src += 'fu-systemd.c'
+endif
+if get_option('polkit')
+  daemon_dep += polkit
 endif
 
 if build_daemon
@@ -247,12 +251,12 @@ executable(
     gmodule,
     gudev,
     gusb,
-    polkit,
     soup,
     sqlite,
     valgrind,
     libarchive,
     libjsonglib,
+    daemon_dep
   ],
   link_with : [
     fwupd,
