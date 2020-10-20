@@ -321,8 +321,13 @@ fu_engine_requirements_client_pass_func (gconstpointer user_data)
 	ret = fu_engine_check_requirements (engine, request, task,
 					    FWUPD_INSTALL_FLAG_NONE,
 					    &error);
+#ifdef HAVE_POLKIT
 	g_assert_no_error (error);
 	g_assert (ret);
+#else
+	g_assert_error (error, FWUPD_ERROR, FWUPD_ERROR_INVALID_FILE);
+	g_assert_false (ret);
+#endif
 }
 
 static void
@@ -462,8 +467,13 @@ fu_engine_requirements_child_func (gconstpointer user_data)
 	ret = fu_engine_check_requirements (engine, request, task,
 					    FWUPD_INSTALL_FLAG_NONE,
 					    &error);
+#ifdef HAVE_POLKIT
 	g_assert_no_error (error);
 	g_assert (ret);
+#else
+	g_assert_error (error, FWUPD_ERROR, FWUPD_ERROR_INVALID_FILE);
+	g_assert_false (ret);
+#endif
 }
 
 static void
@@ -557,8 +567,13 @@ fu_engine_requirements_func (gconstpointer user_data)
 	ret = fu_engine_check_requirements (engine, request, task,
 					    FWUPD_INSTALL_FLAG_NONE,
 					    &error);
+#ifdef HAVE_POLKIT
 	g_assert_no_error (error);
 	g_assert (ret);
+#else
+	g_assert_error (error, FWUPD_ERROR, FWUPD_ERROR_INVALID_FILE);
+	g_assert_false (ret);
+#endif
 }
 
 static void
@@ -614,8 +629,13 @@ fu_engine_requirements_device_func (gconstpointer user_data)
 	ret = fu_engine_check_requirements (engine, request, task,
 					    FWUPD_INSTALL_FLAG_NONE,
 					    &error);
+#ifdef HAVE_POLKIT
 	g_assert_no_error (error);
 	g_assert (ret);
+#else
+	g_assert_error (error, FWUPD_ERROR, FWUPD_ERROR_INVALID_FILE);
+	g_assert_false (ret);
+#endif
 }
 
 static void
@@ -661,8 +681,13 @@ fu_engine_requirements_device_plain_func (gconstpointer user_data)
 	ret = fu_engine_check_requirements (engine, request, task,
 					    FWUPD_INSTALL_FLAG_NONE,
 					    &error);
+#ifdef HAVE_POLKIT
 	g_assert_no_error (error);
 	g_assert (ret);
+#else
+	g_assert_error (error, FWUPD_ERROR, FWUPD_ERROR_INVALID_FILE);
+	g_assert_false (ret);
+#endif
 }
 
 static void
@@ -777,8 +802,13 @@ fu_engine_requirements_other_device_func (gconstpointer user_data)
 	ret = fu_engine_check_requirements (engine, request, task,
 					    FWUPD_INSTALL_FLAG_NONE,
 					    &error);
+#ifdef HAVE_POLKIT
 	g_assert_no_error (error);
 	g_assert (ret);
+#else
+	g_assert_error (error, FWUPD_ERROR, FWUPD_ERROR_INVALID_FILE);
+	g_assert_false (ret);
+#endif
 }
 
 static void
@@ -864,8 +894,13 @@ fu_engine_requirements_protocol_check_func (gconstpointer user_data)
 					    FWUPD_INSTALL_FLAG_NONE,
 					    &error);
 
+#ifdef HAVE_POLKIT
 	g_assert_no_error (error);
 	g_assert (ret);
+#else
+	g_assert_error (error, FWUPD_ERROR, FWUPD_ERROR_INVALID_FILE);
+	g_assert_false (ret);
+#endif
 }
 
 static void
@@ -932,8 +967,13 @@ fu_engine_requirements_parent_device_func (gconstpointer user_data)
 	ret = fu_engine_check_requirements (engine, request, task,
 					    FWUPD_INSTALL_FLAG_NONE,
 					    &error);
+#ifdef HAVE_POLKIT
 	g_assert_no_error (error);
 	g_assert (ret);
+#else
+	g_assert_error (error, FWUPD_ERROR, FWUPD_ERROR_INVALID_FILE);
+	g_assert_false (ret);
+#endif
 }
 
 static void
@@ -1381,12 +1421,17 @@ fu_engine_downgrade_func (gconstpointer user_data)
 	fu_device_set_name (device, "Test Device");
 	fu_device_add_guid (device, "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
 	fu_device_add_flag (device, FWUPD_DEVICE_FLAG_UPDATABLE);
+#ifndef HAVE_POLKIT
+	g_test_expect_message ("FuEngine", G_LOG_LEVEL_WARNING, "*archive signature missing or not trusted");
+#endif
 	fu_engine_add_device (engine, device);
 	devices = fu_engine_get_devices (engine, &error);
 	g_assert_no_error (error);
 	g_assert (devices != NULL);
 	g_assert_cmpint (devices->len, ==, 1);
+#ifdef HAVE_POLKIT
 	g_assert (fu_device_has_flag (device, FWUPD_DEVICE_FLAG_SUPPORTED));
+#endif
 	g_assert (fu_device_has_flag (device, FWUPD_DEVICE_FLAG_REGISTERED));
 
 	/* get the releases for one device */
@@ -1394,9 +1439,16 @@ fu_engine_downgrade_func (gconstpointer user_data)
 					   request,
 					   fu_device_get_id (device),
 					   &error);
+#ifdef HAVE_POLKIT
 	g_assert_no_error (error);
 	g_assert (releases != NULL);
 	g_assert_cmpint (releases->len, ==, 4);
+#else
+	g_assert_error (error, FWUPD_ERROR, FWUPD_ERROR_INVALID_FILE);
+	g_assert (releases == NULL);
+	g_test_skip ("Compiling without PK requires trusted payloads for tests");
+	return;
+#endif
 
 	/* no upgrades, as no firmware is approved */
 	releases_up = fu_engine_get_upgrades (engine,
@@ -1441,7 +1493,9 @@ fu_engine_downgrade_func (gconstpointer user_data)
 static void
 fu_engine_install_duration_func (gconstpointer user_data)
 {
+#ifdef HAVE_POLKIT
 	FwupdRelease *rel;
+#endif
 	gboolean ret;
 	g_autoptr(FuDevice) device = fu_device_new ();
 	g_autoptr(FuEngine) engine = fu_engine_new (FU_APP_FLAGS_NONE);
@@ -1491,23 +1545,32 @@ fu_engine_install_duration_func (gconstpointer user_data)
 	fu_device_add_guid (device, "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
 	fu_device_set_install_duration (device, 999);
 	fu_device_add_flag (device, FWUPD_DEVICE_FLAG_UPDATABLE);
+#ifndef HAVE_POLKIT
+	g_test_expect_message ("FuEngine", G_LOG_LEVEL_WARNING, "*archive signature missing or not trusted");
+#endif
 	fu_engine_add_device (engine, device);
 	devices = fu_engine_get_devices (engine, &error);
 	g_assert_no_error (error);
 	g_assert (devices != NULL);
 	g_assert_cmpint (devices->len, ==, 1);
+#ifdef HAVE_POLKIT
 	g_assert (fu_device_has_flag (device, FWUPD_DEVICE_FLAG_SUPPORTED));
-
+#endif
 	/* check the release install duration */
 	releases = fu_engine_get_releases (engine,
 					   request,
 					   fu_device_get_id (device),
 					   &error);
+#ifdef HAVE_POLKIT
 	g_assert_no_error (error);
 	g_assert (releases != NULL);
 	g_assert_cmpint (releases->len, ==, 1);
 	rel = FWUPD_RELEASE (g_ptr_array_index (releases, 0));
 	g_assert_cmpint (fwupd_release_get_install_duration (rel), ==, 120);
+#else
+	g_assert_error (error, FWUPD_ERROR, FWUPD_ERROR_INVALID_FILE);
+	g_assert (releases == NULL);
+#endif
 }
 
 static void
@@ -2912,7 +2975,13 @@ fu_plugin_composite_func (gconstpointer user_data)
 			g_ptr_array_add (install_tasks, g_steal_pointer (&task));
 		}
 	}
+#ifdef HAVE_POLKIT
 	g_assert_cmpint (install_tasks->len, ==, 3);
+#else
+	g_assert_cmpint (install_tasks->len, ==, 0);
+	g_test_skip ("Compiling without PK support requires signed payloads");
+	return;
+#endif
 
 	/* install the cab */
 	ret = fu_engine_install_tasks (engine,
