@@ -25,7 +25,7 @@
 #include <string.h>
 
 #include "fu-plugin-vfuncs.h"
-#include "fu-flashrom-device.h"
+#include "fu-flashrom-internal-device.h"
 
 #include <libflashrom.h>
 
@@ -38,6 +38,7 @@ fu_plugin_init (FuPlugin *plugin)
 	fu_plugin_add_rule (plugin, FU_PLUGIN_RULE_METADATA_SOURCE, "linux_lockdown");
 	fu_plugin_add_rule (plugin, FU_PLUGIN_RULE_CONFLICTS, "coreboot"); /* obsoleted */
 	fu_plugin_add_flag (plugin, FWUPD_PLUGIN_FLAG_REQUIRE_HWID);
+	fu_plugin_add_possible_quirk_key (plugin, "FlashromProgrammer");
 }
 
 static int
@@ -160,7 +161,7 @@ gboolean
 fu_plugin_coldplug (FuPlugin *plugin, GError **error)
 {
 	const gchar *dmi_vendor;
-	g_autoptr(FuDevice) device = fu_flashrom_device_new ();
+	g_autoptr(FuDevice) device = fu_flashrom_internal_device_new ();
 
 	fu_device_set_quirks (device, fu_plugin_get_quirks (plugin));
 	fu_device_set_name (device, fu_plugin_get_dmi_value (plugin, FU_HWIDS_KEY_PRODUCT_NAME));
@@ -175,6 +176,7 @@ fu_plugin_coldplug (FuPlugin *plugin, GError **error)
 	fu_plugin_flashrom_device_set_version (plugin, device);
 	fu_plugin_flashrom_device_set_hwids (plugin, device);
 	fu_plugin_flashrom_device_set_bios_info (plugin, device);
+	fu_flashrom_device_set_programmer_name (FU_FLASHROM_DEVICE (device), "internal");
 	if (!fu_device_setup (device, error))
 		return FALSE;
 
