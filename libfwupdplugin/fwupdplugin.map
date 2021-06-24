@@ -815,3 +815,10 @@ LIBFWUPDPLUGIN_1.6.1 {
     fu_version_string;
   local: *;
 } LIBFWUPDPLUGIN_1.6.0;
+
+LIBFWUPDPLUGIN_1.6.2 {
+  global:
+    fu_i2c_device_read_full;
+    fu_i2c_device_write_full;
+  local: *;
+} LIBFWUPDPLUGIN_1.6.1;
