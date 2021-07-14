@@ -38,6 +38,7 @@ struct romentry {
 
 struct flashrom_layout {
 	struct romentry		*entries;
+	size_t			 capacity;
 	gsize			 num_entries;
 };
 
