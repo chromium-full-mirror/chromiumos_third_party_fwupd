@@ -820,5 +820,6 @@ LIBFWUPDPLUGIN_1.6.2 {
   global:
     fu_i2c_device_read_full;
     fu_i2c_device_write_full;
+    fu_smbios_setup_from_kernel;
   local: *;
 } LIBFWUPDPLUGIN_1.6.1;
