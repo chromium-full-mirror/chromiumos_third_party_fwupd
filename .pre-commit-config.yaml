@@ -43,3 +43,7 @@ repos:
       language: system
       entry: shellcheck --severity=error -e SC2068
       types: [shell]
+    - id: clang-format
+      name: clang-format
+      language: script
+      entry: ./contrib/reformat-code.py
