@@ -47,3 +47,4 @@ repos:
       name: clang-format
       language: script
       entry: ./contrib/reformat-code.py
+      types: [c]
