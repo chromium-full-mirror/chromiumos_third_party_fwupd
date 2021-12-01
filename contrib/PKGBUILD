@@ -4,7 +4,7 @@
 pkgname=fwupd
 pkgver=dummy
 pkgrel=1
-pkgdesc='A simple daemon to allow session software to update firmware'
+pkgdesc='A system daemon to allow session software to update firmware'
 arch=('i686' 'x86_64')
 url='https://github.com/fwupd/fwupd'
 license=('GPL2')
@@ -30,6 +30,7 @@ build() {
     arch-meson -D b_lto=false $CI ../build \
         -Dplugin_intel_spi=true \
         -Dlzma=true \
+        -Ddocs=gtkdoc \
         -Defi_binary=false \
         -Dsupported_build=true
 
@@ -37,7 +38,7 @@ build() {
 }
 
 check() {
-    ninja -C build test
+    CACHE_DIRECTORY=/tmp ninja -C build test
 }
 
 package() {

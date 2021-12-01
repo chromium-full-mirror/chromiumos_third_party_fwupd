@@ -15,7 +15,7 @@ msgstr ""
 "Language: fur\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#. more than a minute
+#. TRANSLATORS: more than a minute
 #, c-format
 msgid "%.0f minute remaining"
 msgid_plural "%.0f minutes remaining"
@@ -178,10 +178,6 @@ msgstr "Al nete i risultâts dal ultin inzornament"
 msgid "Command not found"
 msgstr "Comant no cjatât"
 
-#. TRANSLATORS: prompt to apply the update
-msgid "Continue with update?"
-msgstr "Continuâ cul inzornament?"
-
 #. TRANSLATORS: DFU stands for device firmware update
 msgid "DFU Utility"
 msgstr "Utilitât DFU"
@@ -342,10 +338,6 @@ msgstr "Non file"
 msgid "Filename Signature"
 msgstr "Firme non file"
 
-#. TRANSLATORS: program name
-msgid "Firmware Agent"
-msgstr "Agjent Firmware"
-
 #. TRANSLATORS: remote URI
 msgid "Firmware Base URI"
 msgstr "URI de base dal firmware"
@@ -388,10 +380,6 @@ msgid "GUID"
 msgstr "GUID"
 
 #. TRANSLATORS: command description
-msgid "Get all devices and possible releases"
-msgstr "Oten ducj i dispositîfs e lis pussibilis publicazions"
-
-#. TRANSLATORS: command description
 msgid "Get all devices that support firmware updates"
 msgstr "Oten ducj i dispositîfs che a supuartin i inzornaments dal firmware"
 
@@ -423,9 +411,6 @@ msgstr "In polse…"
 msgid "Install a firmware file on this hardware"
 msgstr "Instale un file firmware su chest hardware"
 
-msgid "Install old version of system firmware"
-msgstr "Instale une version vecje dal firmware di sisteme"
-
 msgid "Install signed device firmware"
 msgstr "Instasle firmware di dispositîf firmât"
 
@@ -451,6 +436,7 @@ msgstr "Daûr a instalâ l'inzornament dal firmware…"
 msgid "Installing on %s…"
 msgstr "Daûr a instalâ su %s…"
 
+#. TRANSLATORS: keyring type, e.g. GPG or PKCS7
 msgid "Keyring"
 msgstr "Puarteclâfs"
 
@@ -535,10 +521,6 @@ msgstr "Mostre dome il valôr PCR"
 #. TRANSLATORS: command line option
 msgid "Override the default ESP path"
 msgstr "Passe parsore al valôr dal percors ESP predefinît"
-
-#. TRANSLATORS: command line option
-msgid "Override warnings and force the action"
-msgstr "Ignore i avertiments e sfuarce la azion"
 
 #. TRANSLATORS: remote filename base
 msgid "Password"
@@ -709,6 +691,7 @@ msgstr "Distudâ cumò?"
 msgid "Sign data using the client certificate"
 msgstr "Firme i dâts doprant il certificât dal client"
 
+#. TRANSLATORS: command description
 msgctxt "command-description"
 msgid "Sign data using the client certificate"
 msgstr "Firme i dâts doprant il certificât dal client"
@@ -842,12 +825,6 @@ msgstr "Daûr a inzornâ %s di %s a %s... "
 #, c-format
 msgid "Updating %s…"
 msgstr "Daûr a inzornâ %s…"
-
-#. TRANSLATORS: message letting the user know an upgrade is available
-#. * %1 is the device name and %2 and %3 are version strings
-#, c-format
-msgid "Upgrade available for %s from %s to %s"
-msgstr "Inzornament disponibil par %s di %s a %s"
 
 #. TRANSLATORS: ask the user to upload
 msgid "Upload report now?"

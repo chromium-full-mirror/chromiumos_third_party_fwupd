@@ -53,11 +53,11 @@ _fwupdtool_opts=(
 	'--prepare'
 	'--cleanup'
 	'--filter'
+	'--method'
 	'--disable-ssl-strict'
 	'--no-safety-check'
 	'--ignore-checksum'
 	'--ignore-vid-pid'
-	'--ignore-power'
 )
 
 _show_filters()
