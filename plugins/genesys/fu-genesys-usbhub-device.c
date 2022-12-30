@@ -758,9 +758,6 @@ fu_genesys_usbhub_device_setup(FuDevice *device, GError **error)
 	g_autofree guint8 *buf = NULL;
 	g_autofree gchar *ic_type = NULL;
 
-        g_debug("waiting 5 seconds for hub to settle");
-        g_usleep(5*1000000);
-
 	/* FuUsbDevice->setup */
 	if (!FU_DEVICE_CLASS(fu_genesys_usbhub_device_parent_class)->setup(device, error)) {
 		g_prefix_error(error, "error setuping device: ");
