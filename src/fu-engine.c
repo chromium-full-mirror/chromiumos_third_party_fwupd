@@ -5435,7 +5435,6 @@ fu_engine_get_releases_for_device(FuEngine *self,
 {
 	GPtrArray *device_guids;
 	const gchar *version;
-	g_autoptr(GError) error_all = NULL;
 	g_autoptr(GPtrArray) branches = NULL;
 	g_autoptr(GPtrArray) releases = NULL;
 
@@ -5490,11 +5489,7 @@ fu_engine_get_releases_for_device(FuEngine *self,
 
 		/* nothing found */
 		if (components == NULL) {
-			if (error_all == NULL) {
-				error_all = g_steal_pointer(&error_local);
-				continue;
-			}
-			g_prefix_error(&error_all, "%s, ", error_local->message);
+			g_debug("%s", error_local->message);
 			continue;
 		}
 
@@ -5508,13 +5503,8 @@ fu_engine_get_releases_for_device(FuEngine *self,
 									 component,
 									 releases,
 									 &error_tmp)) {
-				if (error_all == NULL) {
-					error_all = g_steal_pointer(&error_tmp);
-					continue;
-				}
-
-				/* assume the domain and code is the same */
-				g_prefix_error(&error_all, "%s, ", error_tmp->message);
+				g_debug("%s", error_tmp->message);
+				continue;
 			}
 		}
 	}
@@ -5538,14 +5528,6 @@ fu_engine_get_releases_for_device(FuEngine *self,
 
 	/* return the compound error */
 	if (releases->len == 0) {
-		if (error_all != NULL) {
-			g_set_error(error,
-				    FWUPD_ERROR,
-				    FWUPD_ERROR_NOTHING_TO_DO,
-				    "No releases found: %s",
-				    error_all->message);
-			return NULL;
-		}
 		g_set_error(error, FWUPD_ERROR, FWUPD_ERROR_NOTHING_TO_DO, "No releases found");
 		return NULL;
 	}
