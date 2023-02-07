@@ -3472,6 +3472,16 @@ fu_util_backends_save(FuUtilPrivate *priv, const gchar *fn, GError **error)
 	return g_file_set_contents(fn, data, -1, error);
 }
 
+static void
+fu_util_print_error(FuUtilPrivate *priv, const GError *error)
+{
+	if (priv->as_json) {
+		fu_util_print_error_as_json(error);
+		return;
+	}
+	g_printerr("%s\n", error->message);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -4071,10 +4081,9 @@ main(int argc, char *argv[])
 						&priv->filter_include,
 						&priv->filter_exclude,
 						&error)) {
-			g_print("%s: %s\n",
-				/* TRANSLATORS: the user didn't read the man page */
-				_("Failed to parse flags for --filter"),
-				error->message);
+			/* TRANSLATORS: the user didn't read the man page */
+			g_prefix_error(&error, "%s: ", _("Failed to parse flags for --filter"));
+			fu_util_print_error(priv, error);
 			return EXIT_FAILURE;
 		}
 	}
@@ -4121,7 +4130,7 @@ main(int argc, char *argv[])
 	/* just show versions and exit */
 	if (version) {
 		if (!fu_util_version(priv, &error)) {
-			g_printerr("%s\n", error->message);
+			fu_util_print_error(priv, error);
 			return EXIT_FAILURE;
 		}
 		return EXIT_SUCCESS;
@@ -4141,7 +4150,7 @@ main(int argc, char *argv[])
 			return EXIT_FAILURE;
 		}
 #endif
-		g_printerr("%s\n", error->message);
+		fu_util_print_error(priv, error);
 		if (g_error_matches(error, FWUPD_ERROR, FWUPD_ERROR_INVALID_ARGS)) {
 			/* TRANSLATORS: error message explaining command on how to get help */
 			g_printerr("\n%s\n", _("Use fwupdtool --help for help"));

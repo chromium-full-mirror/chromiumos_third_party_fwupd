@@ -3987,6 +3987,16 @@ fu_util_setup_interactive(FuUtilPrivate *priv, GError **error)
 	return fu_util_setup_interactive_console(error);
 }
 
+static void
+fu_util_print_error(FuUtilPrivate *priv, const GError *error)
+{
+	if (priv->as_json) {
+		fu_util_print_error_as_json(error);
+		return;
+	}
+	g_printerr("%s\n", error->message);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -4547,10 +4557,9 @@ main(int argc, char *argv[])
 						&priv->filter_include,
 						&priv->filter_exclude,
 						&error)) {
-			g_print("%s: %s\n",
-				/* TRANSLATORS: the user didn't read the man page */
-				_("Failed to parse flags for --filter"),
-				error->message);
+			/* TRANSLATORS: the user didn't read the man page */
+			g_prefix_error(&error, "%s: ", _("Failed to parse flags for --filter"));
+			fu_util_print_error(priv, error);
 			return EXIT_FAILURE;
 		}
 	}
@@ -4618,7 +4627,9 @@ main(int argc, char *argv[])
 		g_printerr(_("Failed to connect to Windows service, please ensure it's running."));
 		g_debug("%s", error->message);
 #else
-		g_printerr("Failed to connect to daemon: %s\n", error->message);
+		/* TRANSLATORS: could not contact the fwupd service over D-Bus */
+		g_prefix_error(&error, "%s: ", _("Failed to connect to daemon"));
+		fu_util_print_error(priv, error);
 #endif
 		return EXIT_FAILURE;
 	}
@@ -4636,7 +4647,7 @@ main(int argc, char *argv[])
 	/* just show versions and exit */
 	if (version) {
 		if (!fu_util_version(priv, &error)) {
-			g_printerr("%s\n", error->message);
+			fu_util_print_error(priv, error);
 			return EXIT_FAILURE;
 		}
 		return EXIT_SUCCESS;
@@ -4654,7 +4665,7 @@ main(int argc, char *argv[])
 	/* check that we have at least this version daemon running */
 	if ((priv->flags & FWUPD_INSTALL_FLAG_FORCE) == 0 &&
 	    !fu_util_check_daemon_version(priv, &error)) {
-		g_printerr("%s\n", error->message);
+		fu_util_print_error(priv, error);
 		return EXIT_FAILURE;
 	}
 
@@ -4663,14 +4674,14 @@ main(int argc, char *argv[])
 	if ((priv->flags & FWUPD_INSTALL_FLAG_FORCE) == 0 &&
 	    !fwupd_client_get_daemon_interactive(priv->client) &&
 	    !fu_util_using_correct_daemon(&error)) {
-		g_printerr("%s\n", error->message);
+		fu_util_print_error(priv, error);
 		return EXIT_FAILURE;
 	}
 #endif
 
 	/* make sure polkit actions were installed */
 	if (!fu_util_check_polkit_actions(&error)) {
-		g_printerr("%s\n", error->message);
+		fu_util_print_error(priv, error);
 		return EXIT_FAILURE;
 	}
 
@@ -4687,7 +4698,9 @@ main(int argc, char *argv[])
 						    flags,
 						    priv->cancellable,
 						    &error)) {
-			g_printerr("Failed to set front-end features: %s\n", error->message);
+			/* TRANSLATORS: a feature is something like "can show an image" */
+			g_prefix_error(&error, "%s: ", _("Failed to set front-end features"));
+			fu_util_print_error(priv, error);
 			return EXIT_FAILURE;
 		}
 	}
@@ -4702,10 +4715,7 @@ main(int argc, char *argv[])
 			return EXIT_FAILURE;
 		}
 #endif
-		if (priv->as_json)
-			g_debug("%s\n", error->message);
-		else
-			g_printerr("%s\n", error->message);
+		fu_util_print_error(priv, error);
 		if (g_error_matches(error, FWUPD_ERROR, FWUPD_ERROR_INVALID_ARGS)) {
 			/* TRANSLATORS: error message explaining command on how to get help */
 			g_printerr("\n%s\n", _("Use fwupdmgr --help for help"));
