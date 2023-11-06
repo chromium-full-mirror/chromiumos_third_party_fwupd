@@ -376,23 +376,28 @@ if introspection.allowed()
   )
 endif
 
-gcab = executable(
-  'gcab',
-  sources: [
-    'fu-gcab.c',
-  ],
-  include_directories: [
-    root_incdir,
-    fwupd_incdir,
-  ],
-  dependencies: [
-    library_deps
-  ],
-  link_with: [
-    fwupd,
-    fwupdplugin
-  ],
-)
+if meson.is_cross_build()
+  gcab = find_program('gcab')
+else
+  gcab = executable(
+    'gcab',
+    sources: [
+      'fu-gcab.c',
+    ],
+    include_directories: [
+      root_incdir,
+      fwupd_incdir,
+    ],
+    dependencies: [
+      library_deps,
+      fwupdplugin_rs_dep,
+    ],
+    link_with: [
+      fwupd,
+      fwupdplugin
+    ],
+  )
+endif
 
 if get_option('tests')
   subdir('tests')
