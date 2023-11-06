@@ -382,7 +382,9 @@ if introspection.allowed()
   )
 endif
 
-if get_option('tests')
+if meson.is_cross_build()
+  gcab = find_program('gcab')
+else
   gcab = executable(
     'gcab',
     sources: [
@@ -401,6 +403,9 @@ if get_option('tests')
       fwupdplugin
     ],
   )
+endif
+
+if get_option('tests')
   subdir('tests')
 endif
 
