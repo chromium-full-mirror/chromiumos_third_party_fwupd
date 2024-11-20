@@ -48,6 +48,7 @@ fu_scsi_device_probe(FuDevice *device, GError **error)
 	FuScsiDevice *self = FU_SCSI_DEVICE(device);
 	GUdevDevice *udev_device = fu_udev_device_get_dev(FU_UDEV_DEVICE(device));
 	guint64 removable = 0;
+	const gchar *tmp;
 	g_autofree gchar *vendor_id = NULL;
 	g_autoptr(FuUdevDevice) ufshci_parent = NULL;
 	const gchar *subsystem_parents[] = {"pci", "platform", NULL};
@@ -80,6 +81,13 @@ fu_scsi_device_probe(FuDevice *device, GError **error)
 
 	vendor_id = g_strdup_printf("SCSI:%s", fu_device_get_vendor(device));
 	fu_device_add_vendor_id(device, vendor_id);
+
+	/* firmware version */
+	tmp = g_udev_device_get_property(udev_device, "ID_REVISION");
+	if (tmp != NULL) {
+		/* The format is already set to plain. */
+		fu_device_set_version(device, tmp);
+	}
 
 	/* the ufshci controller could really be on any bus... search in order of priority */
 	for (guint i = 0; subsystem_parents[i] != NULL && ufshci_parent == NULL; i++) {
