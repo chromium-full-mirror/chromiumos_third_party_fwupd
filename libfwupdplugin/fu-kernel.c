@@ -172,24 +172,6 @@ fu_kernel_set_firmware_search_path(const gchar *path, GError **error)
 					error);
 }
 
-/**
- * fu_kernel_reset_firmware_search_path:
- * @error: (nullable): optional return location for an error
- *
- * Resets the FU_PATH_KIND_FIRMWARE_SEARCH to an empty string
- *
- * Returns: %TRUE if successful
- *
- * Since: 1.8.2
- **/
-gboolean
-fu_kernel_reset_firmware_search_path(GError **error)
-{
-	const gchar *contents = " ";
-
-	return fu_kernel_set_firmware_search_path(contents, error);
-}
-
 typedef struct {
 	GHashTable *hash;
 	GHashTable *values;

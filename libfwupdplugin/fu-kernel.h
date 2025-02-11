@@ -16,8 +16,6 @@ gchar *
 fu_kernel_get_firmware_search_path(GError **error);
 gboolean
 fu_kernel_set_firmware_search_path(const gchar *path, GError **error) G_GNUC_NON_NULL(1);
-gboolean
-fu_kernel_reset_firmware_search_path(GError **error);
 GHashTable *
 fu_kernel_get_config(GError **error);
 GHashTable *

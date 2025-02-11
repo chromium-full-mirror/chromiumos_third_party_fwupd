@@ -1592,10 +1592,9 @@ fu_mm_device_prepare_firmware_search_path(FuMmDevice *self, GError **error)
 static gboolean
 fu_mm_device_restore_firmware_search_path(FuMmDevice *self, GError **error)
 {
-	if (self->restore_firmware_path != NULL && strlen(self->restore_firmware_path) > 0)
-		return fu_kernel_set_firmware_search_path(self->restore_firmware_path, error);
-
-	return fu_kernel_reset_firmware_search_path(error);
+	if (self->restore_firmware_path == NULL || strlen(self->restore_firmware_path) == 0)
+		return TRUE;
+	return fu_kernel_set_firmware_search_path(self->restore_firmware_path, error);
 }
 
 static gboolean

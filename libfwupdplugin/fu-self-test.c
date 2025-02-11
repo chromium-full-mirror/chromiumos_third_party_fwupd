@@ -1799,7 +1799,6 @@ fu_common_kernel_search_func(void)
 	gboolean ret;
 	const gchar *expect = "/foo/bar";
 	g_autofree gchar *result1 = NULL;
-	g_autofree gchar *result2 = NULL;
 	g_autoptr(GError) error = NULL;
 
 #ifndef __linux__
@@ -1822,15 +1821,6 @@ fu_common_kernel_search_func(void)
 	g_assert_nonnull(result1);
 	g_assert_cmpstr(result1, ==, expect);
 	g_assert_no_error(error);
-
-	ret = fu_kernel_reset_firmware_search_path(&error);
-	g_assert_true(ret);
-	g_assert_no_error(error);
-
-	result2 = fu_kernel_get_firmware_search_path(&error);
-	g_assert_nonnull(result2);
-	g_assert_no_error(error);
-	g_assert_cmpstr(g_strchomp(result2), ==, "");
 }
 
 static gboolean
