@@ -9,62 +9,47 @@
 
 #include "fu-thunderbolt-common.h"
 
-static gchar *
-fu_thunderbolt_device_find_usb4_port_path(FuUdevDevice *device,
-					  const gchar *attribute,
-					  GError **error)
+static gboolean
+fu_thunderbolt_device_check_usb4_port_path(FuUdevDevice *device,
+					   const gchar *attribute,
+					   GError **error)
 {
-	const gchar *sysfs_path = fu_udev_device_get_sysfs_path(device);
-	for (guint i = 0; i < 9; i++) {
-		g_autofree gchar *path = g_strdup_printf("usb4_port%u/%s", i, attribute);
-		g_autofree gchar *fn = g_build_filename(sysfs_path, path, NULL);
-		g_autoptr(GFile) file = g_file_new_for_path(fn);
-		if (g_file_query_exists(file, NULL))
-			return g_steal_pointer(&path);
-	}
-	g_set_error(error,
-		    FWUPD_ERROR,
-		    FWUPD_ERROR_NOT_FOUND,
-		    "failed to find usb4_port?/%s",
-		    attribute);
-	return NULL;
-}
-
-gboolean
-fu_thunderbolt_udev_set_port_offline(FuUdevDevice *device, GError **error)
-{
-	g_autofree gchar *attribute = NULL;
-	g_autoptr(GError) error_local = NULL;
-
-	attribute = fu_thunderbolt_device_find_usb4_port_path(device, "offline", &error_local);
-	if (attribute == NULL) {
-		g_debug("failed to check usb4 offline path: %s", error_local->message);
-		return TRUE;
-	}
-	if (!fu_udev_device_write_sysfs(device,
-					attribute,
-					"1",
-					FU_THUNDERBOLT_DEVICE_WRITE_TIMEOUT,
-					error)) {
-		g_prefix_error_literal(error, "setting usb4 port offline failed: ");
+	g_autofree const gchar *path =
+	    g_build_filename(fu_udev_device_get_sysfs_path(device), attribute, NULL);
+	g_autofree gchar *fn = g_strdup_printf("%s", path);
+	g_autoptr(GFile) file = g_file_new_for_path(fn);
+	if (!g_file_query_exists(file, NULL)) {
+		g_set_error(error, FWUPD_ERROR, FWUPD_ERROR_NOT_FOUND, "failed to find %s", fn);
 		return FALSE;
 	}
 	return TRUE;
 }
 
 gboolean
-fu_thunderbolt_udev_rescan_port(FuUdevDevice *device, GError **error)
+fu_thunderbolt_udev_set_port_offline(FuUdevDevice *device, GError **error)
 {
-	g_autofree gchar *attribute = NULL;
+	const gchar *offline = "usb4_port1/offline";
+	const gchar *rescan = "usb4_port1/rescan";
 	g_autoptr(GError) error_local = NULL;
 
-	attribute = fu_thunderbolt_device_find_usb4_port_path(device, "rescan", &error_local);
-	if (attribute == NULL) {
+	if (!fu_thunderbolt_device_check_usb4_port_path(device, offline, &error_local)) {
+		g_debug("failed to check usb4 offline path: %s", error_local->message);
+		return TRUE;
+	}
+	if (!fu_udev_device_write_sysfs(device,
+					offline,
+					"1",
+					FU_THUNDERBOLT_DEVICE_WRITE_TIMEOUT,
+					error)) {
+		g_prefix_error(error, "setting usb4 port offline failed: ");
+		return FALSE;
+	}
+	if (!fu_thunderbolt_device_check_usb4_port_path(device, rescan, &error_local)) {
 		g_debug("failed to check usb4 rescan path: %s", error_local->message);
 		return TRUE;
 	}
 	if (!fu_udev_device_write_sysfs(device,
-					attribute,
+					rescan,
 					"1",
 					FU_THUNDERBOLT_DEVICE_WRITE_TIMEOUT,
 					error)) {
@@ -78,16 +63,15 @@ gboolean
 fu_thunderbolt_udev_set_port_online(FuUdevDevice *device, GError **error)
 {
 	FuUdevDevice *udev = FU_UDEV_DEVICE(device);
-	g_autofree gchar *attribute = NULL;
+	const gchar *offline = "usb4_port1/offline";
 	g_autoptr(GError) error_local = NULL;
 
-	attribute = fu_thunderbolt_device_find_usb4_port_path(device, "offline", &error_local);
-	if (attribute == NULL) {
+	if (!fu_thunderbolt_device_check_usb4_port_path(device, offline, &error_local)) {
 		g_debug("failed to check usb4 port path: %s", error_local->message);
 		return TRUE;
 	}
 	if (!fu_udev_device_write_sysfs(udev,
-					attribute,
+					offline,
 					"0",
 					FU_THUNDERBOLT_DEVICE_WRITE_TIMEOUT,
 					error)) {
