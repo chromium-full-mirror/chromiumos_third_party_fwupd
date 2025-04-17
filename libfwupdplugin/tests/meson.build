@@ -75,6 +75,7 @@ if sqlite.found()
       'pci.ids',
       'pnp.ids',
       'usb.ids',
+      'uevent',
     ],
     install_dir: join_paths(installed_test_datadir, 'tests')
   )
