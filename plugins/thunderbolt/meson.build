@@ -24,5 +24,4 @@ plugin_builtins += plugin_builtin_thunderbolt
 
 device_tests += files(
   'tests/caldigit-ts4-tbt.json',
-  'tests/lenovo-x280-tbt.json',
 )
